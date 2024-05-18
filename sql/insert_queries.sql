@@ -62,16 +62,7 @@ VALUES
     ('MH6789', 'VH3579');
 
 
-INSERT INTO Manages (NurseID, VendorID)
-VALUES
-    ('N1234', 'VH9876'),
-    ('N5678', 'VH5432'),
-    ('N8765', 'VH6789'),
-    ('N4321', 'VH2468'),
-    ('N6789', 'VH3579');
-
-
-INSERT INTO Donor (VendorID, DonorID, NurseID, Blood_Amount)
+INSERT INTO Donor (VendorID, DonorID, NurseID, Amount_Don)
 VALUES
     ('VH9876', 'P9876', 'N1234', 250),
     ('VH5432', 'P5432', 'N5678', 200),

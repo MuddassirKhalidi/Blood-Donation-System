@@ -53,12 +53,6 @@ CREATE TABLE SendsBlood (
     PRIMARY KEY (HospitalID, VendorID)
 );
 
--- Manages Table
-CREATE TABLE Manages (
-    NurseID VARCHAR(100) REFERENCES Nurse(NurseID) ON DELETE CASCADE,
-    VendorID VARCHAR(100) REFERENCES Vendor(VendorID) ON DELETE CASCADE,
-    PRIMARY KEY (NurseID, VendorID)
-);
 
 -- Donor Table (with ON DELETE SET NULL for VendorID and NurseID)
 CREATE TABLE Donor (

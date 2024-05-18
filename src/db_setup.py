@@ -1,5 +1,5 @@
 import psycopg2
-import os 
+import os
 
 def create_database(user, pw):
     """
@@ -38,10 +38,8 @@ def get_query(file_path):
 
 
 try:
-    username = 'muddassirkhalidi'
-    # input('Enter username: ')
-    password = 'Mjkt260421pgadmin'
-    # input('Enter password: ')
+    username = input('Enter username: ')
+    password = input('Enter password: ')
     create_database(username, password)
 
 

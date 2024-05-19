@@ -270,9 +270,11 @@ def requestBloodFromVendor(hospitalID):
         vendorID = input('Enter a vendor ID from above: ')
         if vendorID not in [vendor[0] for vendor in vendors]:
             vendorID = input('Enter a valid vendor ID: ')
-        insert_request = 'INSERT INTO sendsblood (hospitalid, vendorid, amount) VALUES (%s, %s, %s)'
-        cursor.execute(insert_request, (hospitalID, vendorID, amount))
+        insert_request = 'INSERT INTO sendsblood (hospitalid, vendorid, amount, bloodtype) VALUES (%s, %s, %s, %s)'
+        cursor.execute(insert_request, (hospitalID, vendorID, amount, bloodType))
         print('Request sent!')
+    else:
+        print('No vendors available to fulfil request')
 
 def sendBloodtoHospital(vendorID):
     get_inventory = 'SELECT bloodtype, volume FROM vendorbloodinventory WHERE vendorid = %s'
@@ -284,18 +286,21 @@ def sendBloodtoHospital(vendorID):
     requests = cursor.fetchall() 
     update_hospital_inventory = 'UPDATE hospitalbloodinventory SET volume = volume + %s WHERE hospitalid = %s AND bloodtype = %s'
     insert_hospital_inventory = 'INSERT INTO hospitalbloodinventory VALUES(%s, %s, %s)'
+    update_vendor_inventory = 'UPDATE vendorbloodinventory SET volume = volume - %s WHERE vendorid = %s AND bloodtype = %s'
     get_hospital_inventory = 'SELECT * FROM hospitalbloodinventory WHERE hospitalid = %s AND bloodtype = %s'
     update_sendsblood = 'UPDATE sendsblood SET sent = True, date_sent = CURRENT_TIMESTAMP WHERE vendorid = %s'
     if requests:
         for hospitalID, bloodtype, amount in requests:
+            
             if inventory[bloodtype] >= amount:
                 cursor.execute(get_hospital_inventory, (hospitalID, bloodtype))
-                if cursor.fetchall():
-                    print(f'Executing update for hospitalID: {hospitalID}, bloodtype: {bloodtype}, amount: {amount}')
+                print(f'Executing update for hospitalID: {hospitalID}, bloodtype: {bloodtype}, amount: {amount}')
+                if cursor.fetchall(): #If hospital has an inventory for the requested bloodtype
                     cursor.execute(update_hospital_inventory, (amount, hospitalID, bloodtype))
-                    cursor.execute(update_sendsblood, (vendorID,))
-                else:
+                else: #If hospital does not have an inventory for the requested bloodtype
                     cursor.execute(insert_hospital_inventory, (hospitalID, bloodtype, amount))
+                cursor.execute(update_sendsblood, (vendorID,))
+                cursor.execute(update_vendor_inventory, (amount, vendorID, bloodtype))
             else:
                 print(f'Not enough blood to fulfil request for: {hospitalID}')
 
@@ -327,12 +332,18 @@ def main_menu():
                     break
                 if admin_choice == '1':
                     addHospital()
+                    print('-' * 50)
                 elif admin_choice == '2':
                     addVendor()
+                    print('-' * 50)
                 elif admin_choice == '3':
                     removeHospital()
+                    print('-' * 50)
                 elif admin_choice == '4':
                     removeVendor()
+                    print('-' * 50)
+            print('-' * 50)
+            
 
         elif choice == '2':
             while True:
@@ -341,15 +352,15 @@ def main_menu():
                 cursor.execute(get_hospitals)
                 hospitals = cursor.fetchall()
                 print(tabulate(hospitals, headers=['Hospital ID', 'Name', 'Contact', 'Location'], tablefmt='heavy_grid'))
-                hospitalID = input('Enter hospital ID from the table above or type "back" to go back: ')
+                
+                hospitalID = input('Enter hospital ID from the table above or type "back" to go back: ').strip()
+                valid_ids = [str(hospital[0]) for hospital in hospitals]
+                
+                while hospitalID.lower() != 'back' and hospitalID not in valid_ids:
+                    hospitalID = input('Enter a valid hospital ID or type "back" to go back: ').strip()
+                
                 if hospitalID.lower() == 'back':
                     break
-                while hospitalID not in [str(hospital[0]) for hospital in hospitals]:
-                    hospitalID = input('Enter a valid hospital ID or type "back" to go back: ')
-                    if hospitalID.lower() == 'back':
-                        break
-                if hospitalID.lower() == 'back':
-                    continue
 
                 while True:
                     print('1. Manage Staff')
@@ -373,8 +384,11 @@ def main_menu():
                                 break
                             if hospital_choice1 == '1':
                                 addNurse(place, hospitalID)
+                                print('-' * 50)
                             elif hospital_choice1 == '2':
                                 removeNurse(place, hospitalID)
+                                print('-' * 50)
+                        print('-' * 50)
                     elif hospital_choice == '2':
                         while True:
                             print('1. Add new Patient')
@@ -387,6 +401,7 @@ def main_menu():
                                 break
                             if hospital_choice2 == '1':
                                 addRecipient(hospitalID)
+                                print('-' * 50)
                             elif hospital_choice2 == '2':
                                 get_patients = '''SELECT * FROM patient WHERE fileno IN
                                                 (SELECT DISTINCT recipientid FROM recipient WHERE hospitalid = %s )'''
@@ -396,11 +411,7 @@ def main_menu():
                                 recipientID = input('Enter recipientID from the table above or type "back" to go back: ')
                                 id_bloodtype = {recipient[0]:recipient[3] for recipient in patients}
                                 while recipientID not in id_bloodtype:
-                                    recipientID = input('Enter a valid ID or type "back" to go back: ')
-                                    if recipientID.lower() == 'back':
-                                        break
-                                if recipientID.lower() == 'back':
-                                    continue
+                                    recipientID = input('Enter a valid ID: ')
                                 bloodType = id_bloodtype[recipientID]
 
                                 get_nurses = '''SELECT * FROM nurse WHERE nurseid in
@@ -411,14 +422,14 @@ def main_menu():
                                     print(tabulate(nurses, headers=['Nurse ID', 'Name', 'Contact'], tablefmt='heavy_grid'))
                                     nurseID = input('Enter the nurse ID from the table above or type "back" to go back: ')
                                     while nurseID not in [nurse[0] for nurse in nurses]:
-                                        nurseID = input('Enter a valid nurse ID or type "back" to go back: ')
-                                        if nurseID.lower() == 'back':
-                                            break
-                                    if nurseID.lower() == 'back':
-                                        continue
+                                        nurseID = input('Enter a valid nurse ID: ')                   
                                     administerBlood(hospitalID, recipientID, nurseID, bloodType)
+                                print('-' * 50)
+                        print('-' * 50)
                     elif hospital_choice == '3':
                         requestBloodFromVendor(hospitalID)
+                        print('-' * 50)
+                print('-' * 50)
 
         elif choice == '3':
             while True:
@@ -428,14 +439,10 @@ def main_menu():
                 vendors = cursor.fetchall()
                 print(tabulate(vendors, headers=['Vendor ID', 'Name', 'Contact', 'Location'], tablefmt='heavy_grid'))
                 vendorID = input('Enter vendor ID from the table above or type "back" to go back: ')
+                while vendorID not in [str(vendor[0]) for vendor in vendors] and vendorID.lower() != 'back':
+                    vendorID = input('Enter a valid vendor ID or type "back" to go back: ')
                 if vendorID.lower() == 'back':
                     break
-                while vendorID not in [str(vendor[0]) for vendor in vendors]:
-                    vendorID = input('Enter a valid vendor ID or type "back" to go back: ')
-                    if vendorID.lower() == 'back':
-                        break
-                if vendorID.lower() == 'back':
-                    continue
 
                 while True:
                     print('1. Manage Staff')
@@ -459,8 +466,11 @@ def main_menu():
                                 break
                             if vendor_choice1 == '1':
                                 addNurse(place, vendorID)
+                                print('-' * 50)
                             elif vendor_choice1 == '2':
                                 removeNurse(place, vendorID)
+                                print('-' * 50)
+                        print('-' * 50)
                     elif vendor_choice == '2':
                         while True:
                             print('1. Add new Patient')
@@ -473,6 +483,7 @@ def main_menu():
                                 break
                             if vendor_choice2 == '1':
                                 addDonor(vendorID)
+                                print('-' * 50)
                             elif vendor_choice2 == '2':
                                 get_patients = '''SELECT * FROM patient WHERE fileno IN
                                                 (SELECT DISTINCT donorid FROM donor WHERE vendorid = %s )'''
@@ -482,11 +493,7 @@ def main_menu():
                                 donorID = input('Enter donor ID from the table above or type "back" to go back: ')
                                 id_bloodtype = {donor[0]:donor[3] for donor in patients}
                                 while donorID not in id_bloodtype:
-                                    donorID = input('Enter a valid ID or type "back" to go back: ')
-                                    if donorID.lower() == 'back':
-                                        break
-                                if donorID.lower() == 'back':
-                                    continue
+                                    donorID = input('Enter a valid ID: ')
                                 bloodType = id_bloodtype[donorID]
 
                                 get_nurses = '''SELECT * FROM nurse WHERE nurseid in
@@ -497,25 +504,24 @@ def main_menu():
                                     print(tabulate(nurses, headers=['Nurse ID', 'Name', 'Contact'], tablefmt='heavy_grid'))
                                     nurseID = input('Enter the nurse ID from the table above or type "back" to go back: ')
                                     while nurseID not in [nurse[0] for nurse in nurses]:
-                                        nurseID = input('Enter a valid nurse ID or type "back" to go back: ')
-                                        if nurseID.lower() == 'back':
-                                            break
-                                    if nurseID.lower() == 'back':
-                                        continue
+                                        nurseID = input('Enter a valid nurse ID: ')
                                     donateBlood(vendorID, donorID, nurseID, bloodType)
+                                print('-' * 50)
+                            print('-' * 50)
                     elif vendor_choice == '3':
                         sendBloodtoHospital(vendorID)
+                        print('-' * 50)
+                print('-' * 50)
+                
 
         elif choice == '4':
             print('Exiting the program.')
             break
 
-# Note: Ensure that all the functions called within this code (addHospital, addVendor, removeHospital, removeVendor, 
-# addNurse, removeNurse, addRecipient, administerBlood, requestBloodFromVendor, addDonor, donateBlood, sendBloodtoHospital)
-# are defined in your script and properly handle the database interactions and other functionalities.
-
-def login_to_db(username, password):
+def login_to_db():
     try:
+        username = input('Enter username: ')
+        password = input('Enter password: ')
         conn = psycopg2.connect(dbname = 'blood_donation_system',
                             user = username,
                             password = password,
@@ -528,6 +534,5 @@ def login_to_db(username, password):
     else:
         return (conn, cursor)
 
-conn, cursor = login_to_db('muddassirkhalidi', 'Mjkt260421pgadmin')
-
+conn, cursor = login_to_db()
 main_menu()

@@ -82,10 +82,12 @@ def addRecipient(hospitalID):
 
     # Queries DB to show hospitals where the recipient's blood type is available (more than 50 units)
     show_hospitals_query = '''SELECT hospitalid FROM hospitalbloodinventory 
-                            WHERE bloodtype = %s AND volume >= 50'''
+                            WHERE bloodtype = %s AND volume >= 5'''
     cursor.execute(show_hospitals_query, (bloodType,))
     hospitals = cursor.fetchall()
+    print()
     if hospitals:
+        print(hospitals)
         hospitalIDs = [x[0] for x in hospitals]
         if hospitalID in hospitalIDs:
             get_available_blood = 'SELECT volume FROM hospitalbloodinventory WHERE hospitalid = %s AND bloodtype = %s'
@@ -205,6 +207,17 @@ def removeNurse(place, place_id):
                     (SELECT nurseid FROM {place}_nurse WHERE {place}id = %s)'''
     cursor.execute(get_nurses, (place_id,))
     nurses = cursor.fetchall()
+    if len(nurses) == 1:
+        print(f'Only one nurse remaining. Removing this nurse will mean you are closing the {place}')
+        choice = input('Enter Y to continue and N to exit: ').strip().upper()
+        while choice not in ['Y', 'N']:
+            choice = input('Enter a valid choice [Y, N]: ')
+        if choice == 'Y':
+            delete_vendor = f'DELETE FROM {place} WHERE {place}id = %s'
+            cursor.execute(delete_vendor, (place_id,))
+            return
+        else:
+            return
     print(tabulate(nurses, headers = ['Nurse ID', 'Name', 'Contact Info'], tablefmt = 'heavy_grid'))
     nurseID = input('Enter the nurse ID from the table above: ')
     while nurseID not in [nurse[0] for nurse in nurses]:

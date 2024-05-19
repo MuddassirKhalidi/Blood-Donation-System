@@ -54,9 +54,6 @@ try:
     cursor = conn.cursor()
     create_file_path = os.getcwd() + '/sql/create_queries.sql'
     insert_file_path = os.getcwd() + '/sql/insert_queries.sql'
-    
-    # queries = get_query(insert_file_path)
-    # cursor.execute(queries)
 
     files = [create_file_path, insert_file_path]
     for file in files:

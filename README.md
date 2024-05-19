@@ -1,6 +1,6 @@
 # Blood Donation System
 
-This Python module provides the backend logic for a modern Blood Donation System.
+This Python module provides the backend logic for a modern centralized Blood Donation System.
 
 ## Table of Contents
 
@@ -14,6 +14,7 @@ This Python module provides the backend logic for a modern Blood Donation System
 
 - Allows Admin users to Add and Remove Hospitals and Vendors.
 - Allows Hospitals to administer blood to patients based on existing Blood Inventory levels.
+- Allows Hospitals and Vendors to access centralized patient details without needing to create a new file.
 - Allows Vendors to take 20 units of blood from a donor.
 - Allows Hospitals to request Blood from Vendors by specifying amount and blood type.
 - Allows Vendors to send Blood to Hospitals based on the requests.

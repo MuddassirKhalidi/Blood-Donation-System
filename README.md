@@ -28,9 +28,10 @@ This Python module provides the backend logic for a modern centralized Blood Don
 
 ## Usage
 
-1. Run the `db_setup.py` file to set up the tables and insert 100 nurses, 10 in each vendor.
-2. Run the `main.py`.
-3. Enter the username and password for your `Postgres` server. 
+1. Run the `get_libraries.py` file to install all required libraries.
+2. Run the `db_setup.py` file to set up the tables and insert 100 nurses, 10 in each vendor.
+3. Run the `main.py`.
+4. Enter the username and password for your `Postgres` server. 
 
 ## Requirements
 

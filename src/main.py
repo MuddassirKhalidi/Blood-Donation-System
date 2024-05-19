@@ -145,12 +145,16 @@ def addHospital():
     hospitalID = ''.join([x[0] for x in name.split()]) + contact[-1:-5:-1] + ''.join([x[0] for x in location.split()])
     add_query = 'INSERT INTO hospital VALUES (%s, %s, %s, %s)'
     values = (hospitalID, name, contact, location)
+    
     try:
         cursor.execute(add_query, values)
     except psycopg2.errors.UniqueViolation:
             print('Hospital details already exist')
     else:
         print('Hospital details added')
+        print('Add your first nurse.. (you cannot have a hospital with no nurses)')
+        addNurse('hospital', hospitalID)
+        print('Congratulations! Hospital is set up!')
 
 def removeHospital():
     '''
@@ -242,6 +246,9 @@ def addVendor():
             print('Vendor details already exist')
     else:
         print('Vendor details added')
+        print('Add your first nurse.. (you cannot have a vendor with no nurses)')
+        addNurse('vendor', vendorID)
+        print('Congratulations! Vendor is set up!')
 
 def removeVendor():
     '''
@@ -421,9 +428,9 @@ def main_menu():
                                 cursor.execute(get_patients, (hospitalID,))
                                 patients = cursor.fetchall()
                                 print(tabulate(patients, headers=['Patient ID', 'Name', 'Contact', 'Blood Type'], tablefmt='heavy_grid'))
-                                recipientID = input('Enter recipientID from the table above or type "back" to go back: ')
+                                recipientID = input('Enter Recipient ID from the table: ')
                                 id_bloodtype = {recipient[0]:recipient[3] for recipient in patients}
-                                while recipientID not in id_bloodtype:
+                                while recipientID not in id_bloodtype :
                                     recipientID = input('Enter a valid ID: ')
                                 bloodType = id_bloodtype[recipientID]
 
@@ -502,23 +509,28 @@ def main_menu():
                                                 (SELECT DISTINCT donorid FROM donor WHERE vendorid = %s )'''
                                 cursor.execute(get_patients, (vendorID,))
                                 patients = cursor.fetchall()
-                                print(tabulate(patients, headers=['Patient ID', 'Name', 'Contact', 'Blood Type'], tablefmt='heavy_grid'))
-                                donorID = input('Enter donor ID from the table above or type "back" to go back: ')
-                                id_bloodtype = {donor[0]:donor[3] for donor in patients}
-                                while donorID not in id_bloodtype:
-                                    donorID = input('Enter a valid ID: ')
-                                bloodType = id_bloodtype[donorID]
+                                if patients:
+                                    print(tabulate(patients, headers=['Patient ID', 'Name', 'Contact', 'Blood Type'], tablefmt='heavy_grid'))
+                                    donorID = input('Enter donor ID from the table: ')
+                                    id_bloodtype = {donor[0]:donor[3] for donor in patients}
+                                    while donorID not in id_bloodtype:
+                                        donorID = input('Enter a valid ID: ')
+                                    bloodType = id_bloodtype[donorID]
 
-                                get_nurses = '''SELECT * FROM nurse WHERE nurseid in
-                                                (SELECT nurseid FROM vendor_nurse WHERE vendorid = %s)'''
-                                cursor.execute(get_nurses, (vendorID,))
-                                nurses = cursor.fetchall()
-                                if nurses:
-                                    print(tabulate(nurses, headers=['Nurse ID', 'Name', 'Contact'], tablefmt='heavy_grid'))
-                                    nurseID = input('Enter the nurse ID from the table above or type "back" to go back: ')
-                                    while nurseID not in [nurse[0] for nurse in nurses]:
-                                        nurseID = input('Enter a valid nurse ID: ')
-                                    donateBlood(vendorID, donorID, nurseID, bloodType)
+                                    get_nurses = '''SELECT * FROM nurse WHERE nurseid in
+                                                    (SELECT nurseid FROM vendor_nurse WHERE vendorid = %s)'''
+                                    cursor.execute(get_nurses, (vendorID,))
+                                    nurses = cursor.fetchall()
+                                    if nurses:
+                                        print(tabulate(nurses, headers=['Nurse ID', 'Name', 'Contact'], tablefmt='heavy_grid'))
+                                        nurseID = input('Enter the nurse ID from the table above or type "back" to go back: ')
+                                        while nurseID not in [nurse[0] for nurse in nurses]:
+                                            nurseID = input('Enter a valid nurse ID: ')
+                                        donateBlood(vendorID, donorID, nurseID, bloodType)
+                                    else:
+                                        print('No nurses available')
+                                else:
+                                    print('No existing patients!')
                                 print('-' * 50)
                             print('-' * 50)
                     elif vendor_choice == '3':
